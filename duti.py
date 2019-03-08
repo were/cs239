@@ -30,7 +30,7 @@ def lasso_with_weight(X, Y, weight, alpha=1.0, max_iter=1000):
 
     tf.set_random_seed(114514)
 
-    A = tf.Variable(tf.random_normal(shape=[X.shape[1], 1]), name='ModelParam')
+    A = tf.Variable(tf.random_normal(shape=[X.shape[1], Y.shape[1]]), name='ModelParam')
     #b = tf.Variable(tf.random_normal(shape=(Y.shape[0], )))
 
     tf_predict = tf.matmul(tf_x, A)
@@ -41,7 +41,7 @@ def lasso_with_weight(X, Y, weight, alpha=1.0, max_iter=1000):
     #w_diff = diff
     mis_predict = tf.reduce_mean(tf.square(w_diff))
     vec_length  = tf.multiply(tf.norm(A, ord=1), alpha)
-    lasso_loss = tf.add(tf.multiply(mis_predict, 0.5), vec_length)
+    lasso_loss = tf.add(mis_predict, vec_length)
 
     opt = tf.train.GradientDescentOptimizer(learning_rate=lr)
     train_step = opt.minimize(lasso_loss)
@@ -50,16 +50,16 @@ def lasso_with_weight(X, Y, weight, alpha=1.0, max_iter=1000):
     with tf.Session() as sess:
         sess.run(init)
         last_loss = 114514
-        learning_rate = 0.1
+        learning_rate = 0.001
         mis, vec = sess.run([mis_predict, vec_length], feed_dict={tf_x: X, tf_y:Y, tf_w: weight})
         for i in range(10000):
-            train = sess.run(train_step, feed_dict={tf_x: X, tf_y:Y, tf_w: weight, lr: 0.001})
+            train = sess.run(train_step, feed_dict={tf_x: X, tf_y:Y, tf_w: weight, lr: learning_rate})
             current_loss = sess.run(lasso_loss, feed_dict={tf_x: X, tf_y:Y, tf_w: weight})
 
             if (i + 1) % 500 == 0:
                 print(i + 1, ':', current_loss, learning_rate)
                 mis, vec = sess.run([mis_predict, vec_length], feed_dict={tf_x: X, tf_y:Y, tf_w: weight})
-                print(mis, vec)
+                print('Misprediction: ', mis, 'Delta-sum: ', vec)
                 if last_loss - current_loss < learning_rate:
                     learning_rate *= 0.1
                     if learning_rate < 1e-6:
@@ -75,6 +75,8 @@ def regression(trainX, trainY, trustX, trustY, confidence, lam, sig):
     m = trustX.shape[0]
 
     w = np.concatenate((confidence, np.ones((n, ))))
+    if trustY.shape[1] != 1:
+        w = np.repeat(w, trainY.shape[1], axis=1)
     assert trainX.shape[1] == trustX.shape[1]
 
     K = rbf(trainX, trainX, sig)

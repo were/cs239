@@ -1,5 +1,8 @@
 import duti, pandas, subprocess, os, math, random
 import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(114514)
 
 def uniform_noise(n, Y):
     noise = []
@@ -10,22 +13,30 @@ def uniform_noise(n, Y):
         Y[idx][0] += random.random()
         noise.append(idx)
     return noise
-
 def range_noise(l, r, Y):
     Y[l:r] = -Y[l:r]
     return list(range(l, r))
 
-def find_errs(delta, noise, thr=1e-5):
+def find_errs(delta, noise, fname):
     total = correct = 0
-    for i, j in enumerate(delta):
-        if abs(j) >= thr:
-            total += 1
-            correct += i in noise
-    if total:
-        print('Recall: %d / %d = %.2f' % (correct, len(noise), float(correct) / len(noise)))
-        print('Precision: %d / %d = %.2f' % (correct, total, float(correct) / total))
-    else:
-        print('No error found!')
+    indexed = [(j, i) for i, j in enumerate(delta)]
+    indexed.sort(reverse=True, key=lambda a: abs(a[0]))
+
+    n = len(delta)
+    nn = len(noise)
+    k = 0
+    x, y = [], []
+    while k < n and correct < nn:
+        j, i = indexed[k]
+        if i in noise:
+            correct += 1
+        x.append(float(correct) / len(noise))
+        y.append(float(correct) / (k + 1))
+        k += 1
+    
+    with open(fname, 'w') as f:
+        f.write(str(x) + '\n')
+        f.write(str(y) + '\n')
 
 
 def init_data(n, ratio=0.05):
@@ -43,19 +54,21 @@ def init_data(n, ratio=0.05):
 
     return X, Y, XX, YY
 
-def expreiment1():
+def expreiment1(w):
     X, Y, XX, YY = init_data(500, ratio=0.1)
-    noise = uniform_noise(20, Y)
-    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * 100, 3.8e-6, 0.8)
-    find_errs(delta, noise, 1e-3)
+    noise = uniform_noise(50, Y)
+    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * w, 3.8e-6, 0.7)
+    find_errs(delta, noise, 'uniform%d' % w)
 
-def expreiment2():
+def expreiment2(w):
     X, Y, XX, YY = init_data(500, ratio=0.1)
     noise = range_noise(50, 100, Y)
     XX = X[50:100][::10] - 0.1
     YY = np.sin(XX)
-    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * 300, 3.8e-6, 0.6)
-    find_errs(delta, noise, 1e-3)
+    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * w, 3.8e-6, 0.6)
+    find_errs(delta, noise, 'ranged%d' % w)
 
-#expreiment1()
-expreiment2()
+#expreiment1(100)
+#expreiment1(300)
+expreiment2(100)
+#expreiment2(300)
