@@ -41,7 +41,7 @@ def lasso_with_weight(X, Y, weight, alpha=1.0, max_iter=1000):
     #w_diff = diff
     mis_predict = tf.reduce_mean(tf.square(w_diff))
     vec_length  = tf.multiply(tf.norm(A, ord=1), alpha)
-    lasso_loss = tf.add(mis_predict, vec_length)
+    lasso_loss = tf.add(tf.multiply(mis_predict, 0.5), vec_length)
 
     opt = tf.train.GradientDescentOptimizer(learning_rate=lr)
     train_step = opt.minimize(lasso_loss)

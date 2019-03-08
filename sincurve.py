@@ -54,7 +54,7 @@ def expreiment2():
     noise = range_noise(50, 100, Y)
     XX = X[50:100][::10] - 0.1
     YY = np.sin(XX)
-    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * 100, 3.8e-6, 0.6)
+    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * 300, 3.8e-6, 0.6)
     find_errs(delta, noise, 1e-3)
 
 #expreiment1()
