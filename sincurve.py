@@ -12,13 +12,13 @@ def uniform_noise(n, Y):
     return noise
 
 def range_noise(l, r, Y):
-    Y[l:r] += np.random.randn(r - l) - 0.5
+    Y[l:r] = -Y[l:r]
     return list(range(l, r))
 
-def find_errs(delta, noise):
+def find_errs(delta, noise, thr=1e-5):
     total = correct = 0
     for i, j in enumerate(delta):
-        if abs(j) > 1e-5:
+        if abs(j) >= thr:
             total += 1
             correct += i in noise
     if total:
@@ -45,14 +45,17 @@ def init_data(n, ratio=0.05):
 
 def expreiment1():
     X, Y, XX, YY = init_data(500, ratio=0.1)
-    noise = uniform_noise(20, X)
-    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )), 0.0, 0.8)
-    find_errs(delta, noise)
+    noise = uniform_noise(20, Y)
+    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * 100, 3.8e-6, 0.8)
+    find_errs(delta, noise, 1e-3)
 
 def expreiment2():
     X, Y, XX, YY = init_data(500, ratio=0.1)
-    noise = uniform_noise(20, X)
-    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )), 0.0, 0.8)
-    find_errs(delta, noise)
+    noise = range_noise(50, 100, Y)
+    XX = X[50:100][::10] - 0.1
+    YY = np.sin(XX)
+    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * 100, 3.8e-6, 0.6)
+    find_errs(delta, noise, 1e-3)
 
-expreiment1()
+#expreiment1()
+expreiment2()
