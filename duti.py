@@ -70,7 +70,7 @@ def lasso_with_weight(X, Y, weight, alpha=1.0, max_iter=1000):
 
 
 
-def regression(trainX, trainY, trustX, trustY, confidence, lam, sig):
+def regression(trainX, trainY, trustX, trustY, confidence, lam, sig, alpha=1.0):
     n = trainX.shape[0]
     m = trustX.shape[0]
 
@@ -91,4 +91,4 @@ def regression(trainX, trainY, trustX, trustY, confidence, lam, sig):
     #lasso.fit(X, Y)
     #return lasso.coef_
 
-    return lasso_with_weight(X, Y, w)
+    return lasso_with_weight(X, Y, w, alpha=alpha)

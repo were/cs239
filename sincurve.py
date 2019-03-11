@@ -38,6 +38,8 @@ def find_errs(delta, noise, fname):
         f.write(str(x) + '\n')
         f.write(str(y) + '\n')
 
+    return indexed
+
 
 def init_data(n, ratio=0.05):
     step  = math.pi * 2 / n
@@ -54,6 +56,23 @@ def init_data(n, ratio=0.05):
 
     return X, Y, XX, YY
 
+def extend_trust(indexed, X, Y, XX, YY, noise, n, confirm):
+    for i in range(min(n, len(indexed))):
+        _, idx = indexed[i]
+        if idx in noise:
+            Y[idx, 0] = np.sin(X[idx, 0])
+            if confirm:
+                XX = np.append(XX, X[idx])
+                YY = np.append(YY, Y[idx])
+        else:
+            XX = np.append(XX, X[idx])
+            YY = np.append(YY, Y[idx])
+
+    XX.shape = (XX.shape[0], 1)
+    YY.shape = (YY.shape[0], 1)
+
+    return XX, YY
+
 def expreiment1(w):
     X, Y, XX, YY = init_data(500, ratio=0.1)
     noise = uniform_noise(50, Y)
@@ -61,14 +80,27 @@ def expreiment1(w):
     find_errs(delta, noise, 'uniform%d' % w)
 
 def expreiment2(w):
-    X, Y, XX, YY = init_data(500, ratio=0.1)
+    subprocess.check_output(['mkdir', '-p', 'ranged'])
+    X, Y, XX, YY = init_data(500, ratio=0.05)
     noise = range_noise(50, 100, Y)
-    XX = X[50:100][::10] - 0.1
-    YY = np.sin(XX)
-    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * w, 3.8e-6, 0.6)
-    find_errs(delta, noise, 'ranged%d' % w)
 
+    delta = duti.regression(X, Y, XX, YY, np.ones((XX.shape[0], )) * w, 3.8e-6, 0.6)
+    indexed = find_errs(delta, noise, 'ranged/ranged-origin')
+
+    XX0, YY0 = extend_trust(indexed, X, Y, XX, YY, noise, 50, True)
+    delta = duti.regression(X, Y, XX0, YY0, np.ones((XX.shape[0], )) * w, 3.8e-6, 0.6)
+    indexed = find_errs(delta, noise, 'ranged/ranged-correct')
+
+    XX1, YY1 = extend_trust(indexed, X, Y, XX, YY, noise, 50, True)
+    delta = duti.regression(X, Y, XX1, YY1, np.ones((XX.shape[0], )) * w, 3.8e-6, 0.6)
+    indexed = find_errs(delta, noise, 'ranged/ranged-confirm')
+
+#expreiment1(1)
+#expreiment1(25)
+#expreiment1(50)
 #expreiment1(100)
+#expreiment1(200)
 #expreiment1(300)
+#expreiment2(50)
 expreiment2(100)
 #expreiment2(300)
